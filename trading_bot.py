@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[361]:
+# In[523]:
 
 
 import pandas as pd
@@ -13,14 +13,14 @@ df
 df['Stock Ticker']=[ticker]*len(df.index)
 
 
-# In[362]:
+# In[524]:
 
 
 df['50dayEWM'] = df['Open'].ewm(span=50, adjust=False).mean()
 df['200dayEWM'] = df['Open'].ewm(span=200, adjust=False).mean()
 
 
-# In[363]:
+# In[525]:
 
 
 def rsi(df, periods = 12, ema = True):
@@ -48,13 +48,13 @@ def rsi(df, periods = 12, ema = True):
 df['rsi']=rsi(df)
 
 
-# In[364]:
+# In[526]:
 
 
 df
 
 
-# In[365]:
+# In[527]:
 
 
 import matplotlib.pyplot as plt
@@ -66,7 +66,7 @@ plt.legend(loc=2)
 
 
 
-# In[369]:
+# In[528]:
 
 
 previous_50 = df['50dayEWM'].shift(1)
@@ -75,33 +75,19 @@ crossing = (((df['50dayEWM'] <= df['200dayEWM']) & (previous_50 >= previous_200)
             | ((df['50dayEWM'] >= df['200dayEWM']) & (previous_50 <= previous_200)))
 
 
-# In[370]:
+# In[529]:
 
 
 crossing_dates = df.loc[crossing]
-print(crossing_dates)
 
 
-# In[371]:
+# In[530]:
 
 
 df['Date'] = pd.to_datetime(df['Date'])
 
 
-# In[372]:
-
-
-x=crossing_dates.index[-1]-100
-y=crossing_dates.index[-1]+100
-df1= df.iloc[x:y]
-df1
-plt.plot(df1['Open'], label='A')
-plt.plot(df1['50dayEWM'], label='50-day EWM')
-plt.plot(df1['200dayEWM'], label='200-day EWM')
-plt.legend(loc=2)
-
-
-# In[373]:
+# In[531]:
 
 
 previous_50 = df['50dayEWM'].shift(1)
@@ -109,7 +95,7 @@ previous_200 = df['200dayEWM'].shift(1)
 buys = (((df['50dayEWM'] <= df['200dayEWM']) & (previous_50 >= previous_200)))
 
 
-# In[374]:
+# In[532]:
 
 
 previous_50 = df['50dayEWM'].shift(1)
@@ -117,7 +103,7 @@ previous_200 = df['200dayEWM'].shift(1)
 sells = (((df['50dayEWM'] >= df['200dayEWM']) & (previous_50 <= previous_200)))
 
 
-# In[375]:
+# In[533]:
 
 
 buy_dates = df.loc[buys]
@@ -125,70 +111,49 @@ sell_dates = df.loc[sells]
 buy_dates
 
 
-# In[376]:
+# In[534]:
 
 
 buyindex=df.index[buys].tolist()
-print(buyindex)
 buy_dates
 profit=0
 loss=0
 profits=[]
 rsi_list=[]
 for i in buyindex:
-    if i>200 and df.loc[i]['Open'] !=0:
+    if i>200 and i<len(df)-300 and df.loc[i]['Open'] !=0:
         buy=df.loc[i]['Open']
-        rsi_list.append(df.loc[i]['rsi'])
-        print("-----")
-
         for j in range(i,i+265):
             
             p=df.loc[j]['Open']-buy
-            if p/buy<-0.1:
-                print(buy,df.loc[j]['Open'],p,j-i,df.loc[i]['rsi'])
-                
-                print("stoploss hit")
+            if p/buy<-0.1:                
                 loss=loss+1
                 profits.append(p/buy)
+                rsi_list.append(df.loc[i]['rsi'])
                 break
             elif p/buy>0.1:
-                print(buy,df.loc[j]['Open'],p,j-i,df.loc[i]['rsi'])
                 profit=profit+1
                 profits.append(p/buy)
+                rsi_list.append(df.loc[i]['rsi'])
                 break
-        print(j-i)
         if j-i==264:
             if buy<df.loc[j]['Open']:
-                print(buy,df.loc[j]['Open'],p,j-i)
                 profit=profit+1
-                profit.append((df.loc[j]['Open']-buy)/buy)
+                profits.append((df.loc[j]['Open']-buy)/buy)
+                rsi_list.append(df.loc[i]['rsi'])
             else :
-                print(buy,df.loc[j]['Open'],p,j-i)
-                print("yearend exit")
                 profit.append((df.loc[j]['Open']-buy)/buy)
+                rsi_list.append(df.loc[i]['rsi'])
                 loss=loss+1
-        
 
 
-                
-        
-
-
-
-# In[377]:
+# In[535]:
 
 
 print(profit,loss)
 
 
-# In[378]:
-
-
-print(profits)
-print(rsi_list)
-
-
-# In[379]:
+# In[536]:
 
 
 fig = plt.figure(figsize = (10, 5))
@@ -200,13 +165,20 @@ plt.bar(rsi_list, profits, color ='maroon',
 plt.xlabel("rsi")
 plt.ylabel("profit")
 plt.show()
+plt.savefig(ticker+'.png')
 
 
-# In[380]:
+# In[537]:
 
 
 cap=1
 for i in profits:
     cap=cap*(1+i)
-print(cap)
+print("capital invested in ",ticker, " is multiplied by ",cap-1)
+
+
+# In[ ]:
+
+
+
 
